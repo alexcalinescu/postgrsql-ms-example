@@ -1,0 +1,12 @@
+version: "3.3"
+services:
+  papel_db:
+    image: public.ecr.aws/bitnami/postgresql:14.3.0
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=123456
+    volumes:
+      - ./etc/docker/init-db:/docker-entrypoint-initdb.d:ro
+    ports:
+      - 5432:5432
