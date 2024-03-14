@@ -1,6 +1,7 @@
 package com.papel.orders.rest;
 
 import com.papel.orders.dto.request.OrderRequest;
+import com.papel.orders.dto.request.StatusUpdateRequest;
 import com.papel.orders.dto.response.OrderResponse;
 import com.papel.orders.service.OrderService;
 import jakarta.validation.Valid;
@@ -21,14 +22,20 @@ public class OrderController {
         this.orderService = orderService;
     }
 
-    @GetMapping(value = "/{orderId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<OrderResponse> getOrder(@PathVariable long orderId) {
-        return new ResponseEntity<>(orderService.getOrderById(orderId), HttpStatus.OK);
+    @GetMapping(value = "/{orderNumber}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<OrderResponse> getOrder(@PathVariable String orderNumber) {
+        return new ResponseEntity<>(orderService.getByOrderNumber(orderNumber), HttpStatus.OK);
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> createOrder(@RequestBody @Valid OrderRequest orderRequest) {
         orderService.createOrder(orderRequest);
         return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    @PatchMapping(value = "/status/{orderNumber}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> updateOrderStatus(@RequestBody @Valid StatusUpdateRequest statusUpdateRequest, @PathVariable String orderNumber) {
+        orderService.updateStatus(statusUpdateRequest, orderNumber);
+        return new ResponseEntity<>(HttpStatus.ACCEPTED);
     }
 }

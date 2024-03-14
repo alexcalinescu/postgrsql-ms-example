@@ -19,6 +19,9 @@ public class OrderResponse {
     @JsonProperty("order_date")
     private LocalDateTime orderDate;
 
+    @JsonProperty("version")
+    private Integer version;
+
     @JsonProperty("order_items")
     private List<OrderItemResponse> orderItems;
 }

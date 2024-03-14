@@ -5,7 +5,8 @@ CREATE TABLE papel_orders.orders (
     order_number VARCHAR(50) UNIQUE NOT NULL,
     order_status VARCHAR(20) NOT NULL,
     created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NOT NULL
+    updated_at TIMESTAMP NOT NULL,
+    version INT NOT NULL
 );
 
 CREATE TABLE papel_orders.order_items (
