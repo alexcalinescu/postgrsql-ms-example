@@ -4,11 +4,14 @@ import com.papel.orders.dto.request.OrderRequest;
 import com.papel.orders.dto.request.StatusUpdateRequest;
 import com.papel.orders.dto.response.OrderResponse;
 import com.papel.orders.entity.Order;
+import com.papel.orders.entity.OrderStatus;
+import com.papel.orders.exceptions.BadRequestException;
 import com.papel.orders.exceptions.ConflictException;
 import com.papel.orders.exceptions.ResourceNotFoundException;
 import com.papel.orders.mappers.OrderMapper;
 import com.papel.orders.repository.OrderRepository;
 import com.papel.orders.service.OrderService;
+import com.papel.orders.validators.OrderStatusValidator;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,6 +34,9 @@ public class OrderServiceTest {
 
     @Mock
     private OrderMapper orderMapper;
+
+    @Mock
+    private OrderStatusValidator orderStatusValidator;
 
     @Mock
     private OrderRepository orderRepository;
@@ -74,12 +80,27 @@ public class OrderServiceTest {
     }
 
     @Test
+    public void testCreateExistingOrder() {
+        OrderRequest orderRequest = new OrderRequest();
+        orderRequest.setOrderNumber(ORDER_NUMBER);
+        Order order = new Order();
+        order.setOrderNumber(ORDER_NUMBER);
+
+        when(orderRepository.findByOrderNumber(ORDER_NUMBER)).thenReturn(Optional.of(order));
+
+        assertThrows(ConflictException.class, () -> orderService.createOrder(orderRequest));
+    }
+
+    @Test
     public void testUpdateStatusSuccessfully() {
         Order order = new Order();
         order.setVersion(0);
+        order.setStatus(OrderStatus.CREATED);
         StatusUpdateRequest statusUpdateRequest = new StatusUpdateRequest();
+        statusUpdateRequest.setStatus(OrderStatus.DELIVERED);
         statusUpdateRequest.setVersion(order.getVersion());
 
+        when(orderStatusValidator.isTargetedStatusAccepted(OrderStatus.DELIVERED, OrderStatus.CREATED)).thenReturn(true);
         when(orderRepository.findByOrderNumber(ORDER_NUMBER)).thenReturn(Optional.of(order));
 
         orderService.updateStatus(statusUpdateRequest, ORDER_NUMBER);
@@ -92,21 +113,42 @@ public class OrderServiceTest {
     public void testUpdateStatusWrongVersion() {
         Order order = new Order();
         order.setVersion(0);
+        order.setStatus(OrderStatus.CREATED);
         StatusUpdateRequest statusUpdateRequest = new StatusUpdateRequest();
+        statusUpdateRequest.setStatus(OrderStatus.PENDING);
         statusUpdateRequest.setVersion(order.getVersion() + 1);
 
+        when(orderStatusValidator.isTargetedStatusAccepted(OrderStatus.PENDING, OrderStatus.CREATED)).thenReturn(true);
         when(orderRepository.findByOrderNumber(ORDER_NUMBER)).thenReturn(Optional.of(order));
 
         assertThrows(ConflictException.class, () -> orderService.updateStatus(statusUpdateRequest, ORDER_NUMBER));
     }
 
     @Test
+    public void testUpdateStatusWrongTargetedStatus() {
+        Order order = new Order();
+        order.setVersion(0);
+        order.setStatus(OrderStatus.CREATED);
+        StatusUpdateRequest statusUpdateRequest = new StatusUpdateRequest();
+        statusUpdateRequest.setStatus(OrderStatus.CREATED);
+        statusUpdateRequest.setVersion(order.getVersion());
+
+        when(orderStatusValidator.isTargetedStatusAccepted(OrderStatus.CREATED, OrderStatus.CREATED)).thenReturn(false);
+        when(orderRepository.findByOrderNumber(ORDER_NUMBER)).thenReturn(Optional.of(order));
+
+        assertThrows(BadRequestException.class, () -> orderService.updateStatus(statusUpdateRequest, ORDER_NUMBER));
+    }
+
+    @Test
     public void testUpdateStatusThrowOptimisticLockException() {
         StatusUpdateRequest statusUpdateRequest = new StatusUpdateRequest();
         statusUpdateRequest.setVersion(0);
+        statusUpdateRequest.setStatus(OrderStatus.DELIVERED);
         Order order = new Order();
         order.setVersion(0);
+        order.setStatus(OrderStatus.CREATED);
 
+        when(orderStatusValidator.isTargetedStatusAccepted(OrderStatus.DELIVERED, OrderStatus.CREATED)).thenReturn(true);
         when(orderRepository.findByOrderNumber(ORDER_NUMBER)).thenReturn(Optional.of(order));
         doThrow(OptimisticLockingFailureException.class).when(orderRepository).save(order);
 

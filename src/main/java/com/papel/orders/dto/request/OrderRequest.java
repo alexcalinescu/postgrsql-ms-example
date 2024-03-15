@@ -1,9 +1,9 @@
 package com.papel.orders.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.papel.orders.validators.ListNotEmpty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 
 import java.util.List;
@@ -12,11 +12,10 @@ import java.util.List;
 public class OrderRequest {
 
     @JsonProperty("order_number")
-    @NotBlank
+    @NotBlank(message = "Order Number should not be blank")
     private String orderNumber;
 
     @JsonProperty("order_items")
-    @NotEmpty
-    @Valid
-    private List<OrderItemRequest> orderItems;
+    @ListNotEmpty(message = "Order Items should not be empty")
+    private List<@Valid OrderItemRequest> orderItems;
 }

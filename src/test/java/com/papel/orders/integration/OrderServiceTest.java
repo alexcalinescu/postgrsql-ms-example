@@ -8,6 +8,7 @@ import com.papel.orders.dto.response.OrderResponse;
 import com.papel.orders.entity.Order;
 import com.papel.orders.entity.OrderItem;
 import com.papel.orders.entity.OrderStatus;
+import com.papel.orders.exceptions.BadRequestException;
 import com.papel.orders.exceptions.ConflictException;
 import com.papel.orders.exceptions.ResourceNotFoundException;
 import com.papel.orders.repository.OrderRepository;
@@ -110,6 +111,16 @@ public class OrderServiceTest {
         Order retrievedOrder = retrievedOrderOptional.get();
         assertEquals(OrderStatus.DELIVERED, retrievedOrder.getStatus());
         assertEquals(existingOrder.getVersion() + 1, retrievedOrder.getVersion());
+    }
+
+    @Test
+    public void testUpdateStatusWrongTargetedStatus() {
+        orderRepository.save(existingOrder);
+        StatusUpdateRequest statusUpdateRequest = new StatusUpdateRequest();
+        statusUpdateRequest.setStatus(OrderStatus.CREATED);
+        statusUpdateRequest.setVersion(existingOrder.getVersion());
+
+        assertThrows(BadRequestException.class, () -> orderService.updateStatus(statusUpdateRequest, ORDER_NUMBER));
     }
 
     @Test

@@ -11,14 +11,14 @@ import java.math.BigDecimal;
 public class OrderItemRequest {
 
     @JsonProperty("product_name")
-    @NotBlank
+    @NotBlank(message = "Product name should not be blank")
     private String productName;
 
     @JsonProperty("quantity")
-    @Min(1)
+    @Min(value = 1, message = "Quantity min value is 1")
     private int quantity;
 
     @JsonProperty("price")
-    @Min(0)
+    @Min(value = 0, message = "Price should be greater than 0")
     private BigDecimal price;
 }
